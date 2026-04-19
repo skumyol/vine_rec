@@ -41,11 +41,10 @@ data/
 .DS_Store
 Thumbs.db
 
-# Docker
-.dockerignore
-
 # Nginx SSL (user-provided)
 nginx/ssl/
+
+# Agent / IDE config (local only)
 .agents
 .agents/skills
 .claude
@@ -53,7 +52,6 @@ nginx/ssl/
 .kiro
 .trae
 .windsurf
-assignment.md
-README.md
+
+# Local-only context dumps
 vinobuzz_context_v2/
-DEPLOY.md
