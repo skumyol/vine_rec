@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================
+   Wine Verification — Design System
+   Refined premium (Linear/Vercel-inspired)
+   ========================================================= */
+
+@layer base {
+  :root {
+    /* Surfaces */
+    --bg: 0 0% 100%;
+    --bg-subtle: 0 0% 98.4%;
+    --bg-muted: 240 5% 96%;
+    --surface: 0 0% 100%;
+    --surface-elevated: 0 0% 100%;
+
+    /* Text */
+    --fg: 240 10% 3.9%;
+    --fg-muted: 240 4% 46%;
+    --fg-subtle: 240 4% 65%;
+
+    /* Borders */
+    --border: 240 6% 90%;
+    --border-strong: 240 6% 80%;
+    --ring: 348 70% 32%;
+
+    /* Brand — deep wine burgundy */
+    --primary: 348 70% 32%;
+    --primary-fg: 0 0% 100%;
+    --primary-soft: 348 70% 96%;
+
+    /* Status */
+    --success: 152 65% 35%;
+    --success-soft: 152 65% 95%;
+    --warning: 38 92% 45%;
+    --warning-soft: 38 92% 95%;
+    --danger: 0 72% 47%;
+    --danger-soft: 0 72% 96%;
+    --info: 217 91% 50%;
+    --info-soft: 217 91% 96%;
+
+    /* Sidebar (always dark) */
+    --sidebar-bg: 240 10% 6%;
+    --sidebar-border: 240 6% 14%;
+    --sidebar-fg: 240 5% 75%;
+    --sidebar-fg-active: 0 0% 100%;
+    --sidebar-hover: 240 6% 12%;
+    --sidebar-active: 240 6% 16%;
+
+    --radius: 12px;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html, body {
+    background: hsl(var(--bg));
+    color: hsl(var(--fg));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv11", "ss01", "cv02";
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  /* Selection */
+  ::selection {
+    background: hsl(var(--primary) / 0.15);
+    color: hsl(var(--primary));
+  }
+
+  /* Scrollbar — subtle */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border-strong));
+    border-radius: 999px;
+    border: 2px solid hsl(var(--bg));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--fg-subtle));
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply bg-white rounded-xl ring-1 ring-zinc-200/70 shadow-sm;
+  }
+
+  .surface-elevated {
+    @apply bg-white rounded-xl ring-1 ring-zinc-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_32px_-12px_rgba(0,0,0,0.08)];
+  }
+
+  .surface-subtle {
+    @apply bg-zinc-50/60 rounded-xl ring-1 ring-zinc-200/60;
+  }
+
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:ring-[hsl(var(--ring))];
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.5) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.5) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .bg-dots {
+    background-image: radial-gradient(hsl(var(--border-strong)) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+    background: linear-gradient(110deg, hsl(var(--bg-muted)) 8%, hsl(var(--bg-subtle)) 18%, hsl(var(--bg-muted)) 33%);
+    background-size: 200% 100%;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+}
