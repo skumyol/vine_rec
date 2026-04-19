@@ -247,23 +247,78 @@ class SearchService:
 
                 image_data = await page.evaluate("""
                     () => {
-                        const images = [];
-                        const imgElements = document.querySelectorAll('img[src*="th.bing.com"], img[src*="thf.bing.com"]');
+                        const seen = new Set();
+                        const out = [];
 
-                        imgElements.forEach(img => {
-                            const src = img.src;
-                            if (src && src.includes('w=42&h=42')) {
-                                const largeSrc = src.replace('w=42&h=42', 'w=800&h=1000');
-                                images.push({
-                                    src: largeSrc,
+                        // PRIMARY: Bing's canonical .iusc divs carry the full
+                        // image URL as JSON in the `m` attribute (key: `murl`).
+                        // This survives layout changes far better than scraping
+                        // <img src> attributes.
+                        document.querySelectorAll('.iusc, a.iusc, [m]').forEach(el => {
+                            const m = el.getAttribute('m');
+                            if (!m) return;
+                            try {
+                                const meta = JSON.parse(m);
+                                const url = meta.murl || meta.purl;
+                                const w = parseInt(meta.mw || '0', 10) || null;
+                                const h = parseInt(meta.mh || '0', 10) || null;
+                                if (!url || seen.has(url)) return;
+                                if (!url.startsWith('http')) return;
+                                seen.add(url);
+                                out.push({
+                                    src: url,
+                                    width: w,
+                                    height: h,
+                                    source: meta.purl || 'bing'
+                                });
+                            } catch (e) { /* malformed JSON, skip */ }
+                        });
+
+                        // FALLBACK 1: thumbnail-rewrite trick for any remaining
+                        // images (covers older Bing layouts).
+                        if (out.length < 5) {
+                            document.querySelectorAll(
+                                'img[src*="th.bing.com"], img[src*="thf.bing.com"]'
+                            ).forEach(img => {
+                                let src = img.src;
+                                if (!src || seen.has(src)) return;
+                                // Normalise small thumbnail sizes -> larger
+                                src = src
+                                    .replace(/w=\\d+&h=\\d+/, 'w=800&h=1000')
+                                    .replace(/&w=\\d+/, '&w=800')
+                                    .replace(/&h=\\d+/, '&h=1000');
+                                if (seen.has(src)) return;
+                                seen.add(src);
+                                out.push({
+                                    src,
                                     width: 800,
                                     height: 1000,
                                     source: 'bing'
                                 });
-                            }
-                        });
+                            });
+                        }
 
-                        return images.slice(0, 10);
+                        // FALLBACK 2: scrape any <a> with imgurl= query param
+                        if (out.length < 3) {
+                            document.querySelectorAll('a[href*="imgurl="]').forEach(a => {
+                                try {
+                                    const u = new URL(a.href, location.origin);
+                                    const direct = u.searchParams.get('mediaurl')
+                                                || u.searchParams.get('imgurl');
+                                    if (direct && !seen.has(direct) && direct.startsWith('http')) {
+                                        seen.add(direct);
+                                        out.push({
+                                            src: direct,
+                                            width: null,
+                                            height: null,
+                                            source: 'bing'
+                                        });
+                                    }
+                                } catch (e) {}
+                            });
+                        }
+
+                        return out.slice(0, 12);
                     }
                 """)
             finally:

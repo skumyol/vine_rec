@@ -156,8 +156,12 @@ class TextMatcher:
                 matched += 1
 
         match_ratio = matched / len(significant)
+        # Reward strong matches: when most tokens hit, don't let one weak
+        # token drag the score down too much. Weight: 60% avg + 40% best.
         avg_score = sum(scores) / len(scores)
-        return avg_score, match_ratio >= min_match_ratio
+        best_score = max(scores)
+        weighted = 0.6 * avg_score + 0.4 * best_score
+        return weighted, match_ratio >= min_match_ratio
     
     def _match_vintage(
         self,
