@@ -6,6 +6,20 @@ from app.models.candidate import OCRResult
 from app.core.constants import FIELD_MATCH_WEIGHTS, SYNONYM_MAPPINGS
 
 
+# Generic French / wine-trade words that often appear in SKU names but
+# rarely on the bottle label itself (or appear inconsistently).
+# Filtering these prevents false producer_mismatch / appellation_mismatch.
+_STOP_WORDS = {
+    "domaine", "chateau", "château", "ch", "ch.",
+    "le", "la", "les", "l",
+    "de", "du", "des", "d", "of",
+    "the", "and", "et",
+    "vin", "wine", "wines", "winery",
+    "cuvee", "cuvée",
+    "estate", "vineyard", "vineyards",
+}
+
+
 class TextMatcher:
     def __init__(self):
         self.weights = FIELD_MATCH_WEIGHTS
@@ -76,41 +90,74 @@ class TextMatcher:
         self,
         target: Optional[str],
         ocr_text: str,
-        threshold: int = 60
+        threshold: int = 70,
+        min_match_ratio: float = 0.5,
     ) -> Tuple[float, bool]:
+        """Match a target field against OCR text.
+
+        Strategy:
+        - Strip generic stop-words ("domaine", "chateau", "le", ...) from target,
+          since they often don't appear on the actual label.
+        - For each significant target token, score with `partial_ratio` against
+          the entire OCR text (handles substring + multi-word labels well) and
+          also try the bare token-in-text fast path.
+        - Field is a "match" when at least `min_match_ratio` of the significant
+          tokens score above `threshold`. Score returned is the average.
+        """
         if not target:
             return 100.0, True
-        
-        ocr_tokens = ocr_text.split()
-        target_tokens = target.split()
-        
-        for target_token in target_tokens:
-            if len(target_token) <= 2:
+
+        ocr_text_lc = ocr_text.lower()
+        if not ocr_text_lc.strip():
+            return 0.0, False
+
+        # Tokenize + drop stop-words and very short tokens
+        raw_tokens = target.lower().replace("-", " ").split()
+        significant = [
+            t for t in raw_tokens
+            if t not in _STOP_WORDS and len(t) > 2
+        ]
+
+        # If everything was a stop-word (e.g. target was just "Domaine"),
+        # fall back to whole-string fuzzy match.
+        if not significant:
+            score = fuzz.partial_ratio(target.lower(), ocr_text_lc)
+            return float(score), score >= threshold
+
+        scores: List[float] = []
+        matched = 0
+
+        for token in significant:
+            # Fast path: literal substring
+            if token in ocr_text_lc:
+                scores.append(100.0)
+                matched += 1
                 continue
-            
-            if target_token in ocr_tokens:
+
+            # Fuzzy partial match against the whole OCR text
+            score = fuzz.partial_ratio(token, ocr_text_lc)
+            if score >= threshold:
+                scores.append(float(score))
+                matched += 1
                 continue
-            
-            matches = process.extract(target_token, ocr_tokens, scorer=fuzz.ratio, limit=3)
-            if matches and matches[0][1] >= threshold:
-                continue
-            
-            synonyms = self._get_synonyms(target_token)
-            synonym_matched = False
-            for syn in synonyms:
-                if syn in ocr_tokens:
-                    synonym_matched = True
+
+            # Synonym fallback (e.g. "saint" <-> "st")
+            best_syn = score
+            for syn in self._get_synonyms(token):
+                if syn in ocr_text_lc:
+                    best_syn = max(best_syn, 100.0)
                     break
-                matches = process.extract(syn, ocr_tokens, scorer=fuzz.ratio, limit=1)
-                if matches and matches[0][1] >= threshold:
-                    synonym_matched = True
-                    break
-            
-            if not synonym_matched:
-                score = max([m[1] for m in matches]) if matches else 0
-                return score, False
-        
-        return 100.0, True
+                s = fuzz.partial_ratio(syn, ocr_text_lc)
+                if s > best_syn:
+                    best_syn = s
+
+            scores.append(float(best_syn))
+            if best_syn >= threshold:
+                matched += 1
+
+        match_ratio = matched / len(significant)
+        avg_score = sum(scores) / len(scores)
+        return avg_score, match_ratio >= min_match_ratio
     
     def _match_vintage(
         self,
