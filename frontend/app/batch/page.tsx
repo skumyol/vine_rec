@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { BatchResultsTable } from '@/components/BatchResultsTable';
+import { BatchProgressList } from '@/components/BatchProgressList';
 import { createBatchJob, pollBatchJob } from '@/lib/api';
 import { AnalysisResult, WineSKUInput } from '@/lib/types';
 
@@ -30,6 +31,8 @@ export default function BatchPage() {
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'hybrid_fast' | 'hybrid_strict'>('hybrid_fast');
   const [progress, setProgress] = useState({ completed: 0, total: 0 });
+  const [incrementalResults, setIncrementalResults] = useState<AnalysisResult[]>([]);
+  const [validWines, setValidWines] = useState<WineSKUInput[]>([]);
 
   const addWine = () => setWines([...wines, { wine_name: '' }]);
   const removeWine = (i: number) => setWines(wines.filter((_, idx) => idx !== i));
@@ -55,15 +58,21 @@ export default function BatchPage() {
       setError('Please enter at least one wine name');
       return;
     }
+    setValidWines(valid);
     setLoading(true);
     setError(null);
     setResults(null);
+    setIncrementalResults([]);
     setProgress({ completed: 0, total: valid.length });
 
     try {
       const job = await createBatchJob({ wines: valid, analyzer_mode: mode });
-      const out = await pollBatchJob(job.job_id, (c, t) =>
-        setProgress({ completed: c, total: t })
+      const out = await pollBatchJob(
+        job.job_id,
+        (c, t, partialResults) => {
+          setProgress({ completed: c, total: t });
+          setIncrementalResults(partialResults);
+        }
       );
       setResults(out);
     } catch (err) {
@@ -86,8 +95,6 @@ export default function BatchPage() {
     URL.revokeObjectURL(url);
   };
 
-  const pct = progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
-  const etaMin = Math.max(0, Math.ceil((progress.total - progress.completed) * 0.5));
 
   return (
     <div>
@@ -196,31 +203,15 @@ export default function BatchPage() {
             </div>
           </div>
 
-          {/* Progress */}
+          {/* Progress - Per-element status */}
           {loading && progress.total > 0 && (
-            <div className="px-5 py-4 border-t border-border bg-bg-subtle">
-              <div className="flex items-baseline justify-between mb-2">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-semibold tabular-nums text-fg">
-                    {progress.completed}
-                  </span>
-                  <span className="text-sm text-fg-muted">of {progress.total} completed</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium text-fg tabular-nums">
-                    {Math.round(pct)}%
-                  </div>
-                  <div className="text-xs text-fg-subtle">
-                    ~{etaMin} min remaining
-                  </div>
-                </div>
-              </div>
-              <div className="h-1.5 bg-bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary transition-all duration-500 ease-out"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
+            <div className="border-t border-border">
+              <BatchProgressList
+                wines={validWines}
+                results={incrementalResults}
+                completed={progress.completed}
+                total={progress.total}
+              />
             </div>
           )}
         </Card>

@@ -86,18 +86,18 @@ export async function getJobStatus(jobId: string): Promise<{
 /** Poll batch job until complete */
 export async function pollBatchJob(
   jobId: string,
-  onProgress?: (completed: number, total: number) => void,
+  onProgress?: (completed: number, total: number, results: AnalysisResult[]) => void,
   pollInterval: number = 3000
 ): Promise<AnalysisResult[]> {
   return new Promise((resolve, reject) => {
     const poll = async () => {
       try {
         const job = await getJobStatus(jobId);
-        
+
         if (onProgress) {
-          onProgress(job.completed_wines, job.total_wines);
+          onProgress(job.completed_wines, job.total_wines, job.results);
         }
-        
+
         if (job.status === 'completed') {
           resolve(job.results);
         } else if (job.status === 'failed') {
@@ -110,7 +110,7 @@ export async function pollBatchJob(
         reject(error);
       }
     };
-    
+
     poll();
   });
 }
