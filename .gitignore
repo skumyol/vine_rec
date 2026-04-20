@@ -57,3 +57,4 @@ nginx/ssl/
 vinobuzz_context_v2/
 nginx/nginx-deploy.conf
     
+.gstack/
