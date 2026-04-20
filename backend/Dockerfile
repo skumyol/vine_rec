@@ -10,24 +10,12 @@ ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive
 
 # Use Debian stable (bookworm) package names
-# Note: Some VPSs have DNS issues; retry logic helps with transient failures
-RUN apt-get update \
-    -o Acquire::Check-Valid-Until=false \
-    -o Acquire::Retries=3 \
-    -o Acquire::http::Timeout=30 \
-    -o Acquire::ForceIPv4=true \
-    && apt-get install -y --no-install-recommends \
-    libgl1 \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    libgomp1 \
-    wget \
-    curl \
-    ca-certificates \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+# Note: Some VPSs have DNS issues; IPv4-only often fixes Alpine/Docker issues
+RUN apt-get update -o Acquire::ForceIPv4=true && \
+    apt-get install -y --no-install-recommends \
+    libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 \
+    wget curl ca-certificates git && \
+    rm -rf /var/lib/apt/lists/*
 
 # Python deps
 COPY requirements.txt .
