@@ -10,8 +10,12 @@ ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive
 
 # Use Debian stable (bookworm) package names
-# Note: Some VPSs have DNS issues; if apt fails, check /etc/resolv.conf
-RUN apt-get update -o Acquire::Check-Valid-Until=false \
+# Note: Some VPSs have DNS issues; retry logic helps with transient failures
+RUN apt-get update \
+    -o Acquire::Check-Valid-Until=false \
+    -o Acquire::Retries=3 \
+    -o Acquire::http::Timeout=30 \
+    -o Acquire::ForceIPv4=true \
     && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
