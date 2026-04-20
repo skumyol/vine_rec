@@ -334,6 +334,37 @@ function ExpandedRow({ result }: { result: AnalysisResult }) {
             <ExternalLink className="h-3 w-3" /> View image source
           </a>
         )}
+
+        {result.top_candidates.length === 0 && result.verdict === 'NO_IMAGE' && (
+          <div className="mt-3 text-xs text-danger">
+            No images found — check DNS/network connectivity
+          </div>
+        )}
+
+        {result.top_candidates.length > 0 && (
+          <div className="mt-3">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle mb-1.5">
+              Image URLs ({result.top_candidates.length} found)
+            </div>
+            <ul className="space-y-1 text-xs">
+              {result.top_candidates.map((c, i) => (
+                <li key={i} className="truncate text-fg-muted">
+                  <span className="text-fg-subtle">{i + 1}.</span>{' '}
+                  <a
+                    href={c.image_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline"
+                    title={c.image_url}
+                  >
+                    {c.image_url.substring(0, 60)}...
+                  </a>
+                  <span className="text-fg-subtle ml-1">({c.total_score.toFixed(1)})</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
