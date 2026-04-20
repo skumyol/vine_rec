@@ -32,8 +32,8 @@ COPY app/ ./app/
 
 RUN mkdir -p /app/data/cache /app/data/images/original /app/data/images/processed /app/data/images/crops /app/data/results
 
-EXPOSE 8000
+EXPOSE 8002
 
 # Single worker keeps the shared Playwright browser + EasyOCR reader as one process.
 # Use --workers 2 only if you have plenty of RAM (each worker = own browser + OCR model).
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--workers", "1"]
