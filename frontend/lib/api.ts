@@ -14,9 +14,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 // For server-side rendering, use internal backend URL
 const getApiUrl = (endpoint: string): string => {
   const isServer = typeof window === 'undefined';
-  if (isServer && API_BASE.startsWith('/')) {
-    // On server, use direct backend URL instead of relative path
-    return `http://localhost:8000/api${endpoint}`;
+  if (isServer) {
+    // On server, use direct backend URL (vine backend on port 8002)
+    return `http://localhost:8002${endpoint}`;
   }
   return `${API_BASE}${endpoint}`;
 };
