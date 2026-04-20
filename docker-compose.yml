@@ -27,6 +27,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      network: host
     ports:
       - "3001:3000"
     environment:
