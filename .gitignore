@@ -56,3 +56,4 @@ nginx/ssl/
 # Local-only context dumps
 vinobuzz_context_v2/
 nginx/nginx-deploy.conf
+nginx/nginx-deploy.conf
