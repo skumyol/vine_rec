@@ -6,6 +6,9 @@ services:
       network: host
     ports:
       - "8002:8000"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     volumes:
       - ./data:/app/data
     environment:
