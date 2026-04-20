@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Activity } from 'lucide-react';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+
 interface HealthData {
   status: string;
   services: {
@@ -23,7 +25,7 @@ export function SystemStatus() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/health')
+    fetch(`${API_BASE}/health`)
       .then(res => res.json())
       .then(data => {
         setHealth(data);

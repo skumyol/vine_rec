@@ -16,7 +16,7 @@ const getApiUrl = (endpoint: string): string => {
   const isServer = typeof window === 'undefined';
   if (isServer) {
     // On server, use direct backend URL (vine backend on port 8002)
-    return `http://localhost:8002${endpoint}`;
+    return `http://localhost:8002/api${endpoint}`;
   }
   return `${API_BASE}${endpoint}`;
 };

@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+
 const NAV = [
   { href: '/', label: 'Overview', icon: Sparkles },
   { href: '/analyze', label: 'Analyze', icon: ScanSearch },
@@ -34,7 +36,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     const tick = async () => {
       try {
-        const r = await fetch('/api/health');
+        const r = await fetch(`${API_BASE}/health`);
         if (r.ok && !cancelled) setHealth(await r.json());
       } catch {}
     };
