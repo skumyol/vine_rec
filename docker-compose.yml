@@ -32,7 +32,7 @@ services:
       - "3001:3000"
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://localhost:8002/api
+      NEXT_PUBLIC_API_URL: /vine/api
     depends_on:
       backend:
         condition: service_healthy

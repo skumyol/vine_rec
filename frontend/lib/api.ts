@@ -9,13 +9,23 @@ import {
   Wine,
 } from './types';
 
-const API_BASE = '/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+// For server-side rendering, use internal backend URL
+const getApiUrl = (endpoint: string): string => {
+  const isServer = typeof window === 'undefined';
+  if (isServer && API_BASE.startsWith('/')) {
+    // On server, use direct backend URL instead of relative path
+    return `http://localhost:8000/api${endpoint}`;
+  }
+  return `${API_BASE}${endpoint}`;
+};
 
 async function fetchApi<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
-  const url = `${API_BASE}${endpoint}`;
+  const url = getApiUrl(endpoint);
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
