@@ -7,14 +7,17 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
-    DEBIAN_FRONTEND=noninteractive
+    DEBIAN_FRONTEND=noninteractive \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 
 # Use Debian stable (bookworm) package names
 # Note: Some VPSs have DNS issues; IPv4-only often fixes Alpine/Docker issues
 RUN apt-get update -o Acquire::ForceIPv4=true && \
     apt-get install -y --no-install-recommends \
     libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 \
-    wget curl ca-certificates git && \
+    wget curl ca-certificates openssl git && \
+    update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Python deps
