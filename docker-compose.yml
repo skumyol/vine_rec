@@ -4,11 +4,14 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       network: host
+    container_name: vine-backend
+    network_mode: host
     ports:
       - "8002:8000"
     dns:
       - 8.8.8.8
       - 8.8.4.4
+      - 1.1.1.1
     volumes:
       - ./data:/app/data
     environment:
@@ -25,6 +28,9 @@ services:
       start_period: 60s
     mem_limit: 4g
     shm_size: 1g
+    extra_hosts:
+      - "www.bing.com:13.107.42.14"
+      - "serpapi.com:104.20.28.34"
 
   frontend:
     build:
