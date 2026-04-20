@@ -45,17 +45,17 @@ class SearchService:
         for r in results:
             all_candidates.extend(r)
 
-        # Fallback: if auto mode returned nothing, try Playwright on first 2 queries
+        # Fallback: if auto mode returned nothing, try Bing via Playwright on first 2 queries
         if not all_candidates and self.provider == "auto":
-            print("No candidates from primary search, trying Playwright fallback...")
+            print("No candidates from primary search, trying Bing fallback...")
             for query in queries[:2]:
                 try:
-                    candidates = await self._search_playwright(query, parsed_sku)
+                    candidates = await self._search_duckduckgo(query, parsed_sku)
                     all_candidates.extend(candidates)
                     if all_candidates:
                         break
                 except Exception as e:
-                    print(f"Playwright fallback error: {e}")
+                    print(f"Bing fallback error: {e}")
 
         deduplicated = self._deduplicate_candidates(all_candidates)
         ranked = self._rank_by_source(deduplicated)
