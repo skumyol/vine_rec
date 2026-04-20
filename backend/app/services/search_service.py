@@ -17,16 +17,66 @@ _BING_CONCURRENCY = 3
 
 
 class SearchService:
+    # Class-level flags so we validate SerpAPI ONCE across the process
+    _serpapi_validated: bool = False
+    _serpapi_available: bool = False
+
     def __init__(self):
         self.provider = settings.SEARCH_PROVIDER
         self.api_key = settings.SEARCH_API_KEY or settings.SERPAPI_KEY
         self.client = httpx.AsyncClient(timeout=30.0)
-    
+
+    async def _ensure_serpapi_validated(self) -> bool:
+        """Validate SerpAPI ONCE per process. Checks:
+        - Network/DNS reachability to serpapi.com
+        - API key validity
+        - Remaining credits (via account endpoint)
+
+        Sets class-level flags so subsequent calls are instant.
+        Returns True if SerpAPI is usable, False otherwise.
+        """
+        if SearchService._serpapi_validated:
+            return SearchService._serpapi_available
+
+        SearchService._serpapi_validated = True
+
+        if not self.api_key:
+            print("[SerpAPI] No API key configured — skipping SerpAPI.")
+            SearchService._serpapi_available = False
+            return False
+
+        try:
+            # Lightweight account endpoint — checks auth + credits
+            resp = await self.client.get(
+                "https://serpapi.com/account",
+                params={"api_key": self.api_key},
+                timeout=10.0,
+            )
+            if resp.status_code != 200:
+                print(f"[SerpAPI] Account check failed: HTTP {resp.status_code} — disabling SerpAPI.")
+                SearchService._serpapi_available = False
+                return False
+            data = resp.json()
+            remaining = data.get("plan_searches_left") or data.get("searches_left") or 0
+            if remaining <= 0:
+                print(f"[SerpAPI] No credits remaining ({remaining}) — disabling SerpAPI for this process.")
+                SearchService._serpapi_available = False
+                return False
+            print(f"[SerpAPI] OK — {remaining} searches remaining.")
+            SearchService._serpapi_available = True
+            return True
+        except Exception as e:
+            print(f"[SerpAPI] Health check failed ({e}) — disabling SerpAPI for this process.")
+            SearchService._serpapi_available = False
+            return False
+
     async def search_candidates(
         self,
         parsed_sku: ParsedSKU,
         queries: List[SearchQuery]
     ) -> List[ImageCandidate]:
+        # Validate SerpAPI once per process (no-op after first call)
+        await self._ensure_serpapi_validated()
         # Run all queries concurrently (capped by semaphore) instead of
         # sequentially with 2s sleeps. Saves ~10s per SKU.
         sem = asyncio.Semaphore(_BING_CONCURRENCY)
@@ -68,17 +118,23 @@ class SearchService:
         query: SearchQuery,
         parsed_sku: ParsedSKU
     ) -> List[ImageCandidate]:
-        # Use serpapi if api_key available and provider is serpapi or auto
-        if self.provider == "serpapi" or (self.provider == "auto" and self.api_key):
-            return await self._search_serpapi(query, parsed_sku)
-        elif self.provider == "playwright":
-            return await self._search_playwright(query, parsed_sku)
-        elif self.provider == "bing":
-            return await self._search_bing(query, parsed_sku)
-        elif self.provider == "mock":
-            return await self._search_mock(query, parsed_sku)
-        else:
+        # Use SerpAPI only if validated as available this process
+        if self.provider == "serpapi":
+            if SearchService._serpapi_available:
+                return await self._search_serpapi(query, parsed_sku)
+            return []  # explicitly requested SerpAPI but it's unavailable
+        if self.provider == "auto":
+            if SearchService._serpapi_available:
+                return await self._search_serpapi(query, parsed_sku)
+            # Auto mode but no SerpAPI — go straight to Bing (Playwright)
             return await self._search_duckduckgo(query, parsed_sku)
+        if self.provider == "playwright":
+            return await self._search_playwright(query, parsed_sku)
+        if self.provider == "bing":
+            return await self._search_bing(query, parsed_sku)
+        if self.provider == "mock":
+            return await self._search_mock(query, parsed_sku)
+        return await self._search_duckduckgo(query, parsed_sku)
     
     async def _search_serpapi(
         self,
