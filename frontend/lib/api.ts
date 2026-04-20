@@ -35,7 +35,7 @@ async function fetchApi<T>(
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`API error: ${response.status} - ${error}`);
+    throw new Error(`API error: ${response.status} for ${url} - ${error.substring(0, 200)}`);
   }
 
   return response.json();
