@@ -39,9 +39,15 @@ export interface BatchAnalysisRequest {
 }
 
 export interface TopCandidate {
-  image_url: string;
-  total_score: number;
+  /** Canonical URL to the candidate image (backend field: url) */
+  url: string;
+  /** Score assigned to the candidate (backend field: score) */
+  score: number;
   verdict: string;
+  domain?: string | null;
+  /** Optional legacy fields kept for backward compatibility */
+  image_url?: string;
+  total_score?: number;
 }
 
 export interface AnalysisResult {

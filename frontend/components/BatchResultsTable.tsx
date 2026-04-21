@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { VerdictBadge } from '@/components/ui/Badge';
 import { cn } from '@/lib/cn';
 import { AnalysisResult } from '@/lib/types';
+import { getCandidateImageUrl, getCandidateScore } from '@/lib/candidate-utils';
 
 type Filter = 'all' | 'PASS' | 'REVIEW' | 'FAIL' | 'NO_IMAGE';
 
@@ -280,25 +281,30 @@ function ExpandedRow({ result }: { result: AnalysisResult }) {
               Top candidates
             </div>
             <div className="flex gap-2 flex-wrap">
-              {result.top_candidates.slice(0, 5).map((c, i) => (
-                <a
-                  key={i}
-                  href={c.image_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="relative group h-16 w-16 rounded-md ring-1 ring-border overflow-hidden bg-white hover:ring-primary/40"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={c.image_url}
-                    alt=""
-                    className="w-full h-full object-contain p-1"
-                  />
-                  <div className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[9px] px-1 text-center font-mono">
-                    {c.total_score.toFixed(0)}
-                  </div>
-                </a>
-              ))}
+              {result.top_candidates.slice(0, 5).map((c, i) => {
+                const imageUrl = getCandidateImageUrl(c);
+                const score = getCandidateScore(c);
+
+                return (
+                  <a
+                    key={i}
+                    href={imageUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="relative group h-16 w-16 rounded-md ring-1 ring-border overflow-hidden bg-white hover:ring-primary/40"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imageUrl}
+                      alt=""
+                      className="w-full h-full object-contain p-1"
+                    />
+                    <div className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[9px] px-1 text-center font-mono">
+                      {score.toFixed(0)}
+                    </div>
+                  </a>
+                );
+              })}
             </div>
           </div>
         )}
@@ -347,21 +353,26 @@ function ExpandedRow({ result }: { result: AnalysisResult }) {
               Image URLs ({result.top_candidates.length} found)
             </div>
             <ul className="space-y-1 text-xs">
-              {result.top_candidates.map((c, i) => (
-                <li key={i} className="truncate text-fg-muted">
-                  <span className="text-fg-subtle">{i + 1}.</span>{' '}
-                  <a
-                    href={c.image_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary hover:underline"
-                    title={c.image_url}
-                  >
-                    {c.image_url.substring(0, 60)}...
-                  </a>
-                  <span className="text-fg-subtle ml-1">({c.total_score.toFixed(1)})</span>
-                </li>
-              ))}
+              {result.top_candidates.map((c, i) => {
+                const imageUrl = getCandidateImageUrl(c);
+                const score = getCandidateScore(c);
+
+                return (
+                  <li key={i} className="truncate text-fg-muted">
+                    <span className="text-fg-subtle">{i + 1}.</span>{' '}
+                    <a
+                      href={imageUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary hover:underline"
+                      title={imageUrl}
+                    >
+                      {imageUrl.substring(0, 60)}...
+                    </a>
+                    <span className="text-fg-subtle ml-1">({score.toFixed(1)})</span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}

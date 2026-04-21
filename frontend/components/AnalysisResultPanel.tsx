@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { VerdictBadge } from '@/components/ui/Badge';
 import { cn } from '@/lib/cn';
 import { AnalysisResult } from '@/lib/types';
+import { getCandidateImageUrl, getCandidateScore } from '@/lib/candidate-utils';
 
 export function AnalysisResultPanel({ data }: { data: AnalysisResult }) {
   const { parsed_sku, selected_image_url, confidence, verdict, reason, top_candidates } = data;
@@ -105,28 +106,33 @@ export function AnalysisResultPanel({ data }: { data: AnalysisResult }) {
             <span className="text-xs text-fg-subtle">Highest score → lowest</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {top_candidates.slice(0, 5).map((c, i) => (
-              <a
-                key={i}
-                href={c.image_url}
-                target="_blank"
-                rel="noreferrer"
-                className="group relative aspect-[3/4] bg-bg-muted rounded-lg overflow-hidden ring-1 ring-border hover:ring-primary/40 hover:shadow-card transition-all"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={c.image_url}
-                  alt={`Candidate ${i + 1}`}
-                  className="w-full h-full object-contain p-2"
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                  <div className="flex items-center justify-between text-[10px] font-medium text-white">
-                    <span>#{i + 1}</span>
-                    <span className="font-mono">{c.total_score.toFixed(1)}</span>
+            {top_candidates.slice(0, 5).map((c, i) => {
+              const imageUrl = getCandidateImageUrl(c);
+              const score = getCandidateScore(c);
+
+              return (
+                <a
+                  key={i}
+                  href={imageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group relative aspect-[3/4] bg-bg-muted rounded-lg overflow-hidden ring-1 ring-border hover:ring-primary/40 hover:shadow-card transition-all"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt={`Candidate ${i + 1}`}
+                    className="w-full h-full object-contain p-2"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                    <div className="flex items-center justify-between text-[10px] font-medium text-white">
+                      <span>#{i + 1}</span>
+                      <span className="font-mono">{score.toFixed(1)}</span>
+                    </div>
                   </div>
-                </div>
-              </a>
-            ))}
+                </a>
+              );
+            })}
           </div>
         </Card>
       )}
