@@ -202,7 +202,8 @@ class SearchService:
                 # Launch browser in headless mode
                 browser = await p.webkit.launch(headless=True)
                 context = await browser.new_context(
-                    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15"
+                    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+                    ignore_https_errors=True
                 )
                 page = await context.new_page()
                 

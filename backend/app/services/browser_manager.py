@@ -35,7 +35,8 @@ class BrowserManager:
             user_agent=(
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                 "AppleWebKit/605.1.15"
-            )
+            ),
+            ignore_https_errors=True
         )
 
     async def new_page(self):

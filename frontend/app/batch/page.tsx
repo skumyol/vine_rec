@@ -222,7 +222,9 @@ export default function BatchPage() {
           </Card>
         )}
 
-        {results && <BatchResultsTable results={results} />}
+        {(results || incrementalResults.length > 0) && (
+          <BatchResultsTable results={results || incrementalResults} />
+        )}
       </div>
     </div>
   );

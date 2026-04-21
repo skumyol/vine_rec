@@ -344,7 +344,8 @@ async def collect_candidates_for_query(query: str) -> dict:
         # Use WebKit instead of Chromium (Chromium crashes on this Mac)
         browser = await p.webkit.launch(headless=HEADLESS)
         context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15"
+            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+            ignore_https_errors=True
         )
 
         search_page = await context.new_page()
